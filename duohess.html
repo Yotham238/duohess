@@ -1,202 +1,696 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mastery English - The Duo Killer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
-        body { font-family: 'Nunito', sans-serif; background-color: #ffffff; }
-        .btn-option { transition: all 0.2s; border: 2px solid #e5e5e5; border-bottom: 4px solid #e5e5e5; }
-        .btn-option:active { border-bottom-width: 2px; transform: translateY(2px); }
-        .btn-option.selected { background-color: #ddf4ff; border-color: #84d8ff; color: #1899d6; }
-        .shake { animation: shake 0.5s; }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnglishQuest — Maîtrise l'anglais business</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --c-bg: #F5F0E8; --c-card: #FFFDF7;
+    --c-primary: #FF6B35; --c-secondary: #4ECDC4;
+    --c-accent: #FFE66D; --c-accent-dark: #F0D800;
+    --c-success: #06D6A0; --c-danger: #EF233C;
+    --c-text: #1A1A2E; --c-border: #1A1A2E;
+    --sh: 4px 4px 0px #1A1A2E; --sh-lg: 6px 6px 0px #1A1A2E; --sh-sm: 2px 2px 0px #1A1A2E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Nunito',sans-serif;background-color:var(--c-bg);
+    background-image:radial-gradient(circle at 15% 50%,rgba(78,205,196,.12) 0%,transparent 50%),
+      radial-gradient(circle at 85% 15%,rgba(255,107,53,.12) 0%,transparent 50%),
+      radial-gradient(circle at 50% 85%,rgba(255,230,109,.18) 0%,transparent 50%);
+    min-height:100vh;color:var(--c-text)}
+  h1,h2,.fd{font-family:'Montserrat',sans-serif}
+
+  .screen{display:none;flex-direction:column;align-items:center;justify-content:center;
+    width:100%;min-height:100vh;padding:16px;opacity:0;transition:opacity .3s ease}
+  .screen.active{display:flex;opacity:1}
+  #screen-game{justify-content:flex-start;padding-top:18px;padding-bottom:130px;overflow-y:auto}
+
+  .btn-b{border:2.5px solid var(--c-border);box-shadow:var(--sh);transition:all .08s ease;
+    cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;user-select:none}
+  .btn-b:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 #1A1A2E}
+  .btn-b:active{transform:translate(4px,4px);box-shadow:0 0 0 #1A1A2E}
+  .btn-b:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:var(--sh)!important}
+
+  .card-b{border:2.5px solid var(--c-border);box-shadow:var(--sh-lg);background:var(--c-card);border-radius:18px}
+
+  .level-card{border:2.5px solid var(--c-border);box-shadow:var(--sh-lg);border-radius:20px;
+    cursor:pointer;transition:all .1s ease;position:relative;overflow:hidden}
+  .level-card:hover:not(.locked){transform:translate(-2px,-2px);box-shadow:8px 8px 0 #1A1A2E}
+  .level-card:active:not(.locked){transform:translate(4px,4px);box-shadow:0 0 0 #1A1A2E}
+  .level-card.locked{cursor:not-allowed;opacity:.6;filter:grayscale(.35)}
+
+  .progress-track{background:#e0d8cc;border:2px solid var(--c-border);border-radius:999px;
+    overflow:hidden;box-shadow:var(--sh-sm)}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--c-primary),var(--c-accent));
+    border-radius:999px;transition:width .6s cubic-bezier(.34,1.56,.64,1);position:relative}
+  .progress-fill::after{content:'';position:absolute;top:2px;left:10px;right:10px;height:4px;
+    background:rgba(255,255,255,.4);border-radius:999px}
+
+  .word-block{border:2.5px solid var(--c-border);box-shadow:var(--sh-sm);border-radius:10px;
+    padding:7px 13px;font-weight:700;cursor:pointer;transition:all .08s ease;background:white;
+    font-size:.9rem;display:inline-flex;align-items:center;user-select:none}
+  .word-block:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 #1A1A2E}
+  .word-block:active{transform:translate(2px,2px);box-shadow:0 0 0 #1A1A2E}
+  .word-block.selected{background:var(--c-secondary);color:white}
+  .word-block.used{opacity:.28;pointer-events:none}
+
+  .answer-zone{min-height:56px;border:2.5px dashed #bbb;border-radius:12px;
+    background:rgba(255,255,255,.5);display:flex;flex-wrap:wrap;gap:8px;
+    padding:10px;align-items:center;transition:border-color .3s}
+  .answer-zone.has-words{border-style:solid;border-color:var(--c-border)}
+
+  .input-b{border:2.5px solid var(--c-border);box-shadow:var(--sh-sm);border-radius:12px;
+    padding:13px 16px;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;
+    background:white;width:100%;outline:none;transition:box-shadow .15s}
+  .input-b:focus{box-shadow:var(--sh)}
+
+  .feedback-bar{position:fixed;bottom:0;left:0;right:0;padding:18px 20px;
+    border-top:3px solid var(--c-border);z-index:200;
+    transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+  .feedback-bar.show{transform:translateY(0)}
+  .feedback-bar.correct{background:var(--c-success)}
+  .feedback-bar.incorrect{background:var(--c-danger)}
+
+  .heart{font-size:1.3rem;transition:transform .3s;display:inline-block}
+  .heart.lose{animation:hlose .4s ease;filter:grayscale(1);opacity:.3}
+  @keyframes hlose{0%,100%{transform:scale(1)}50%{transform:scale(.2) rotate(20deg)}}
+
+  .streak-badge{background:linear-gradient(135deg,var(--c-accent),var(--c-primary));
+    border:2.5px solid var(--c-border);box-shadow:var(--sh-sm);border-radius:999px;
+    padding:3px 11px;font-weight:900;font-size:.8rem}
+  .streak-badge.hot{animation:pulse 1s ease infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+  .type-badge{font-size:.67rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    padding:3px 10px;border-radius:999px;border:2px solid var(--c-border);box-shadow:var(--sh-sm)}
+
+  .audio-btn{width:70px;height:70px;border-radius:50%;background:var(--c-secondary);
+    border:3px solid var(--c-border);box-shadow:var(--sh);display:flex;align-items:center;
+    justify-content:center;cursor:pointer;transition:all .08s ease;font-size:1.7rem}
+  .audio-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #1A1A2E}
+  .audio-btn:active{transform:translate(4px,4px);box-shadow:0 0 0 #1A1A2E}
+  .audio-btn.playing{background:var(--c-accent);animation:aw .6s ease infinite alternate}
+  @keyframes aw{from{transform:scale(1)}to{transform:scale(1.09)}}
+
+  .drop-in{animation:dropIn .55s cubic-bezier(.34,1.56,.64,1) both}
+  @keyframes dropIn{from{transform:translateY(-50px) rotate(-2deg);opacity:0}to{transform:none;opacity:1}}
+
+  .star{font-size:1.4rem;display:inline-block}
+  .star.earned{animation:starPop .4s cubic-bezier(.34,1.56,.64,1) both}
+  @keyframes starPop{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0)}}
+
+  .confetti-piece{position:fixed;pointer-events:none;animation:cfall linear forwards}
+  @keyframes cfall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
 </head>
-<body class="bg-gray-50">
+<body>
 
-    <nav class="max-w-4xl mx-auto p-6 flex items-center justify-between">
-        <button onclick="exitLesson()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times fa-lg"></i></button>
-        <div class="flex-grow mx-6 bg-gray-200 h-4 rounded-full overflow-hidden">
-            <div id="progress-bar" class="bg-green-500 h-full transition-all duration-500" style="width: 0%"></div>
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div class="w-full max-w-sm mx-auto text-center">
+    <div class="card-b rounded-3xl p-8 mb-4">
+      <div class="text-5xl mb-2">🇬🇧</div>
+      <h1 class="fd text-4xl font-black" style="color:var(--c-primary)">EnglishQuest</h1>
+      <p class="text-xs font-bold mt-1 mb-6 tracking-widest" style="color:#999">BUSINESS &amp; EVERYDAY ENGLISH</p>
+      <button class="btn-b w-full py-4 rounded-xl text-lg text-white" style="background:var(--c-primary)"
+        onclick="Screens.show('levels')">Choisir un niveau 🎯</button>
+    </div>
+    <p class="text-xs text-gray-400 font-semibold">3 niveaux · 30 exercices · 100% gratuit</p>
+  </div>
+</div>
+
+<!-- LEVEL SELECT -->
+<div id="screen-levels" class="screen">
+  <div class="w-full max-w-sm mx-auto">
+    <div class="flex items-center gap-3 mb-5">
+      <button onclick="Screens.show('home')" class="btn-b px-3 py-2 rounded-xl text-sm bg-white">← Retour</button>
+      <h2 class="fd text-xl font-black">Choisir un niveau</h2>
+    </div>
+    <div id="level-cards" class="flex flex-col gap-4"></div>
+    <p class="text-xs text-gray-400 font-semibold text-center mt-5">Score ≥ 70% requis pour débloquer le niveau suivant</p>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <div class="w-full max-w-sm mx-auto flex flex-col gap-4">
+    <div class="flex items-center gap-3">
+      <button onclick="Game.confirmQuit()" class="text-gray-400 hover:text-gray-600 font-black text-xl leading-none">✕</button>
+      <div class="flex-1 progress-track h-4">
+        <div id="progress-fill" class="progress-fill h-full" style="width:0%"></div>
+      </div>
+      <div id="lives-display" class="flex gap-0.5"></div>
+      <div id="streak-badge" class="streak-badge" style="display:none">🔥<span id="streak-count">0</span></div>
+    </div>
+    <div id="exercise-card" class="card-b rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <span id="type-badge" class="type-badge"></span>
+        <span id="ex-counter" class="text-sm font-bold text-gray-400"></span>
+      </div>
+      <div id="exercise-content"></div>
+    </div>
+    <button id="btn-validate" class="btn-b w-full py-4 rounded-xl text-lg font-black text-white"
+      style="background:var(--c-secondary)" onclick="Game.validate()">Vérifier ✓</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="screen-gameover" class="screen">
+  <div class="card-b drop-in rounded-3xl p-8 w-full max-w-sm text-center">
+    <div class="text-6xl mb-3">💔</div>
+    <h2 class="fd text-3xl font-black mb-2" style="color:var(--c-danger)">Game Over</h2>
+    <p class="text-gray-500 text-sm mb-6">Toutes tes vies sont épuisées.<br>La régularité est la clé du succès !</p>
+    <div class="flex gap-3">
+      <button class="btn-b flex-1 py-3 rounded-xl font-black" style="background:var(--c-bg)" onclick="Game.restart()">Réessayer 🔄</button>
+      <button class="btn-b flex-1 py-3 rounded-xl font-black text-white" style="background:var(--c-primary)" onclick="Screens.show('levels')">Niveaux 🏠</button>
+    </div>
+  </div>
+</div>
+
+<!-- VICTORY -->
+<div id="screen-victory" class="screen">
+  <div class="card-b drop-in rounded-3xl p-8 w-full max-w-sm text-center">
+    <div class="text-5xl mb-1">🏆</div>
+    <h2 class="fd text-3xl font-black mb-0.5" style="color:var(--c-success)">Bravo !</h2>
+    <p id="v-level" class="text-xs font-bold tracking-widest mb-4" style="color:#aaa"></p>
+    <div id="v-stars" class="flex justify-center gap-3 mb-4"></div>
+    <div id="v-stats" class="grid grid-cols-3 gap-3 mb-4"></div>
+    <div id="v-unlock" class="mb-4"></div>
+    <div class="flex gap-3">
+      <button class="btn-b flex-1 py-3 rounded-xl font-black" style="background:var(--c-bg)" onclick="Game.restart()">Rejouer 🔄</button>
+      <button class="btn-b flex-1 py-3 rounded-xl font-black text-white" style="background:var(--c-success)" onclick="Screens.show('levels')">Niveaux →</button>
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK BAR -->
+<div id="feedback-bar" class="feedback-bar">
+  <div class="max-w-sm mx-auto flex items-center justify-between gap-4">
+    <div>
+      <p id="fb-title" class="font-black text-white text-lg leading-tight"></p>
+      <p id="fb-detail" class="text-white text-sm font-semibold opacity-90 mt-0.5"></p>
+    </div>
+    <button onclick="Game.next()" class="btn-b px-5 py-3 rounded-xl font-black text-sm bg-white shrink-0">SUIVANT →</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ════════════════════════════════════════
+   SOUND FX
+════════════════════════════════════════ */
+const SFX = (() => {
+  let ctx;
+  const init = () => { if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); };
+  function tone(f, type, t, dur, vol=0.17) {
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value=f; o.type=type;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.04); g.gain.linearRampToValueAtTime(0,t+dur);
+    o.start(t); o.stop(t+dur+.01);
+  }
+  return {
+    success(){ init(); const t=ctx.currentTime; [[523,0],[659,.1],[784,.2],[1047,.32]].forEach(([f,d])=>tone(f,'sine',t+d,.18)); },
+    error(){   init(); const t=ctx.currentTime; [[220,0],[185,.15]].forEach(([f,d])=>tone(f,'sawtooth',t+d,.22,.13)); },
+    unlock(){  init(); const t=ctx.currentTime; [[392,0],[523,.1],[659,.2],[784,.3],[1047,.42]].forEach(([f,d])=>tone(f,'sine',t+d,.25)); }
+  };
+})();
+
+/* ════════════════════════════════════════
+   EXERCISES  (10 per level, 3 levels)
+════════════════════════════════════════ */
+const LEVELS = [
+  {
+    id:'B1', label:'B1 — Intermédiaire', emoji:'📗', color:'#4ECDC4', colorDark:'#3DB8B0',
+    requiredScore:0,
+    exercises:[
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#4ECDC4',
+       instruction:'Traduisez en anglais :',
+       fr:'Je dois envoyer ce rapport avant la fin de la journée.',
+       answer:'I need to send this report before the end of the day',
+       hint:'Utilisez "I need to" pour exprimer une obligation.'},
+      {type:'scramble',typeLabel:'🧩 Phrase mélangée',typeColor:'#FF6B35',
+       instruction:'Remettez les mots dans le bon ordre :',
+       words:['the','Could','reschedule','we','meeting','Friday','to','?'],
+       answer:'Could we reschedule the meeting to Friday',
+       hint:'Commencez par "Could" pour une question polie.'},
+      {type:'audio',typeLabel:'🔊 Défi Audio',typeColor:'#c4a000',
+       instruction:'Écoutez et tapez ce que vous entendez :',
+       sentence:'The quarterly sales figures exceeded our expectations.',
+       answer:'The quarterly sales figures exceeded our expectations',
+       hint:'"Quarterly" = trimestriel, "exceeded" = dépassé.'},
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#4ECDC4',
+       instruction:'Traduisez en anglais :',
+       fr:'Pouvez-vous me donner un retour sur ma présentation ?',
+       answer:'Could you give me some feedback on my presentation',
+       hint:'"Feedback" s\'utilise sans article en anglais.'},
+      {type:'scramble',typeLabel:'🧩 Phrase mélangée',typeColor:'#FF6B35',
+       instruction:'Remettez les mots dans le bon ordre :',
+       words:['been','I','have','for','working','company','this','years','three'],
+       answer:'I have been working for this company for three years',
+       hint:'Present perfect continu : "have been + -ing".'},
+      {type:'audio',typeLabel:'🔊 Défi Audio',typeColor:'#c4a000',
+       instruction:'Écoutez et tapez ce que vous entendez :',
+       sentence:'We need to negotiate a better deal with our suppliers.',
+       answer:'We need to negotiate a better deal with our suppliers',
+       hint:'"Suppliers" = fournisseurs.'},
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#4ECDC4',
+       instruction:'Traduisez en anglais :',
+       fr:'Je suis désolé, mais je suis en réunion pour le moment.',
+       answer:"I'm sorry but I'm in a meeting at the moment",
+       hint:'Présent continu pour une activité en cours.'},
+      {type:'scramble',typeLabel:'🧩 Phrase mélangée',typeColor:'#FF6B35',
+       instruction:'Remettez les mots dans le bon ordre :',
+       words:['would','What','like','you','order','to','?'],
+       answer:'What would you like to order',
+       hint:'"Would like" est plus poli que "want".'},
+      {type:'audio',typeLabel:'🔊 Défi Audio',typeColor:'#c4a000',
+       instruction:'Écoutez et tapez ce que vous entendez :',
+       sentence:'I would like to open a savings account please.',
+       answer:'I would like to open a savings account please',
+       hint:'"Savings account" = compte épargne.'},
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#4ECDC4',
+       instruction:'Traduisez en anglais :',
+       fr:'Notre équipe a atteint tous ses objectifs ce trimestre.',
+       answer:'Our team has achieved all its goals this quarter',
+       hint:'"Has achieved" = present perfect.'}
+    ]
+  },
+  {
+    id:'B2', label:'B2 — Intermédiaire avancé', emoji:'📘', color:'#A855F7', colorDark:'#9333EA',
+    requiredScore:70,
+    exercises:[
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#A855F7',
+       instruction:'Traduisez en anglais :',
+       fr:'Si nous avions investi plus tôt, nous aurions évité cette perte.',
+       answer:'If we had invested earlier we would have avoided this loss',
+       hint:'Conditionnel passé : "If + had + pp, would have + pp".'},
+      {type:'scramble',typeLabel:'🧩 Phrase mélangée',typeColor:'#FF6B35',
+       instruction:'Remettez les mots dans le bon ordre :',
+       words:['The','been','has','project','due','delays','postponed','to','unforeseen'],
+       answer:'The project has been postponed due to unforeseen delays',
+       hint:'Passif present perfect : "has been + pp".'},
+      {type:'audio',typeLabel:'🔊 Défi Audio',typeColor:'#c4a000',
+       instruction:'Écoutez et tapez ce que vous entendez :',
+       sentence:'Despite the economic downturn, our revenue grew by twelve percent.',
+       answer:'Despite the economic downturn our revenue grew by twelve percent',
+       hint:'"Downturn" = ralentissement économique.'},
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#A855F7',
+       instruction:'Traduisez en anglais :',
+       fr:'Il est impératif que chaque membre de l\'équipe respecte la deadline.',
+       answer:'It is imperative that every team member meets the deadline',
+       hint:'"It is imperative that" + subjonctif présent.'},
+      {type:'scramble',typeLabel:'🧩 Phrase mélangée',typeColor:'#FF6B35',
+       instruction:'Remettez les mots dans le bon ordre :',
+       words:['stakeholders','Having','all','consulted','we','proceed','decided','to'],
+       answer:'Having consulted all stakeholders we decided to proceed',
+       hint:'Participe passé composé en début de phrase.'},
+      {type:'audio',typeLabel:'🔊 Défi Audio',typeColor:'#c4a000',
+       instruction:'Écoutez et tapez ce que vous entendez :',
+       sentence:'The merger was approved by the board of directors last Tuesday.',
+       answer:'The merger was approved by the board of directors last Tuesday',
+       hint:'"Merger" = fusion.'},
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#A855F7',
+       instruction:'Traduisez en anglais :',
+       fr:'Nous envisageons de lancer un nouveau produit au deuxième trimestre.',
+       answer:'We are considering launching a new product in the second quarter',
+       hint:'"Consider" + gérondif (-ing).'},
+      {type:'scramble',typeLabel:'🧩 Phrase mélangée',typeColor:'#FF6B35',
+       instruction:'Remettez les mots dans le bon ordre :',
+       words:['The','figures','latest','suggest','that','is','market','recovering','the'],
+       answer:'The latest figures suggest that the market is recovering',
+       hint:'"Suggest that" + proposition subordonnée.'},
+      {type:'audio',typeLabel:'🔊 Défi Audio',typeColor:'#c4a000',
+       instruction:'Écoutez et tapez ce que vous entendez :',
+       sentence:'We should take into account the long-term implications of this strategy.',
+       answer:'We should take into account the long-term implications of this strategy',
+       hint:'"Take into account" = prendre en compte.'},
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#A855F7',
+       instruction:'Traduisez en anglais :',
+       fr:'Les résultats seront partagés avec toutes les parties prenantes demain.',
+       answer:'The results will be shared with all stakeholders tomorrow',
+       hint:'Futur passif : "will be + pp".'}
+    ]
+  },
+  {
+    id:'C1', label:'C1 — Avancé', emoji:'📕', color:'#EF233C', colorDark:'#C81D31',
+    requiredScore:70,
+    exercises:[
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#EF233C',
+       instruction:'Traduisez en anglais :',
+       fr:'Bien que les résultats soient encourageants, nous devons rester prudents.',
+       answer:'Although the results are encouraging we must remain cautious',
+       hint:'"Although" introduit une concession.'},
+      {type:'scramble',typeLabel:'🧩 Phrase mélangée',typeColor:'#FF6B35',
+       instruction:'Remettez les mots dans le bon ordre :',
+       words:['only','Not','we','costs','reduced','also','but','efficiency','improved','have','our'],
+       answer:'Not only have we reduced costs but we also improved our efficiency',
+       hint:'"Not only… but also" → inversion après "Not only".'},
+      {type:'audio',typeLabel:'🔊 Défi Audio',typeColor:'#c4a000',
+       instruction:'Écoutez et tapez ce que vous entendez :',
+       sentence:'The unprecedented volatility in global markets necessitates a comprehensive risk reassessment.',
+       answer:'The unprecedented volatility in global markets necessitates a comprehensive risk reassessment',
+       hint:'"Necessitates" = rend nécessaire.'},
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#EF233C',
+       instruction:'Traduisez en anglais :',
+       fr:'On aurait pu éviter cette crise si les signaux d\'alerte avaient été pris en compte.',
+       answer:'This crisis could have been avoided if the warning signs had been taken into account',
+       hint:'Conditionnel passé passif.'},
+      {type:'scramble',typeLabel:'🧩 Phrase mélangée',typeColor:'#FF6B35',
+       instruction:'Remettez les mots dans le bon ordre :',
+       words:['paramount','It','that','is','governance','corporate','transparency','underpins'],
+       answer:'It is paramount that transparency underpins corporate governance',
+       hint:'"Paramount" = primordial.'},
+      {type:'audio',typeLabel:'🔊 Défi Audio',typeColor:'#c4a000',
+       instruction:'Écoutez et tapez ce que vous entendez :',
+       sentence:'Notwithstanding the regulatory constraints, the acquisition proceeded as planned.',
+       answer:'Notwithstanding the regulatory constraints the acquisition proceeded as planned',
+       hint:'"Notwithstanding" = malgré (registre soutenu).'},
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#EF233C',
+       instruction:'Traduisez en anglais :',
+       fr:'Cette politique devrait être révisée à la lumière des récents développements.',
+       answer:'This policy should be revised in light of recent developments',
+       hint:'"In light of" = à la lumière de.'},
+      {type:'scramble',typeLabel:'🧩 Phrase mélangée',typeColor:'#FF6B35',
+       instruction:'Remettez les mots dans le bon ordre :',
+       words:['the','Rarely','opportunity','such','arises','to','influence','policy','directly','does','an'],
+       answer:'Rarely does such an opportunity arise to directly influence policy',
+       hint:'"Rarely" en tête → inversion sujet-auxiliaire.'},
+      {type:'audio',typeLabel:'🔊 Défi Audio',typeColor:'#c4a000',
+       instruction:'Écoutez et tapez ce que vous entendez :',
+       sentence:'The board is contemplating a strategic overhaul to address the structural deficiencies.',
+       answer:'The board is contemplating a strategic overhaul to address the structural deficiencies',
+       hint:'"Overhaul" = refonte, "deficiencies" = lacunes.'},
+      {type:'translation',typeLabel:'📝 Traduction',typeColor:'#EF233C',
+       instruction:'Traduisez en anglais :',
+       fr:'Il convient de souligner que cette décision a des implications à long terme.',
+       answer:'It is worth emphasising that this decision has long-term implications',
+       hint:'"It is worth + -ing" = il convient de.'}
+    ]
+  }
+];
+
+/* ════════════════════════════════════════
+   PROGRESS STORE
+════════════════════════════════════════ */
+const Store = (() => {
+  const KEY='eq_v3';
+  let d={B1:null,B2:null,C1:null};
+  try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) d={...d,...s}; }catch(e){}
+  const save=()=>{ try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){} };
+  return {
+    best(id){ return d[id]; },
+    setBest(id,pct){ const improved=d[id]===null||pct>d[id]; if(improved){d[id]=pct;save();} return improved; },
+    unlocked(lv){
+      const idx=LEVELS.indexOf(lv);
+      if(idx===0) return true;
+      const prev=LEVELS[idx-1];
+      return d[prev.id]!==null && d[prev.id]>=lv.requiredScore;
+    }
+  };
+})();
+
+/* ════════════════════════════════════════
+   SCREENS
+════════════════════════════════════════ */
+const Screens = {
+  show(name){
+    document.querySelectorAll('.screen').forEach(s=>{ s.classList.remove('active'); s.style.display='none'; });
+    const el=document.getElementById('screen-'+name);
+    el.style.display='flex';
+    requestAnimationFrame(()=>el.classList.add('active'));
+    if(name==='levels') LevelSelect.render();
+  }
+};
+
+/* ════════════════════════════════════════
+   LEVEL SELECT
+════════════════════════════════════════ */
+const LevelSelect = {
+  render(){
+    const wrap=document.getElementById('level-cards');
+    wrap.innerHTML='';
+    LEVELS.forEach(lv=>{
+      const unlocked=Store.unlocked(lv);
+      const best=Store.best(lv.id);
+      const stars=best===null?0:best>=90?3:best>=70?2:1;
+      const starsHtml=[1,2,3].map(n=>`<span style="font-size:1.1rem">${n<=stars?'⭐':'☆'}</span>`).join('');
+
+      let progressHtml='';
+      if(best!==null){
+        progressHtml=`<div class="mt-3">
+          <div style="display:flex;justify-content:space-between;font-size:.75rem;font-weight:700;color:#888;margin-bottom:3px">
+            <span>Meilleur score</span><span>${best}%</span></div>
+          <div class="progress-track" style="height:10px">
+            <div class="progress-fill" style="width:${best}%;background:linear-gradient(90deg,${lv.color},${lv.colorDark})"></div>
+          </div></div>`;
+      }
+
+      const lockMsg=!unlocked?`
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+          background:rgba(26,26,46,.06);border-radius:18px;font-size:2.2rem">🔒</div>
+        <p style="font-size:.7rem;font-weight:800;color:#bbb;text-align:center;margin-top:6px">
+          Obtiens ≥${lv.requiredScore}% en ${LEVELS[LEVELS.indexOf(lv)-1].id} pour débloquer</p>`:'';
+
+      const card=document.createElement('div');
+      card.className='level-card p-5'+(unlocked?'':' locked');
+      card.style.background=unlocked?`linear-gradient(135deg,${lv.color}20,white)`:'#f0ece4';
+      card.innerHTML=`
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+          <span style="font-size:2rem">${lv.emoji}</span>
+          <div style="flex:1">
+            <div class="fd" style="font-weight:900;font-size:.95rem">${lv.label}</div>
+            <div style="display:flex;gap:2px;margin-top:2px">${starsHtml}</div>
+          </div>
+          <span style="font-size:.7rem;font-weight:900;padding:3px 10px;border-radius:999px;
+            border:2.5px solid ${lv.color};color:${lv.color};background:${lv.color}20;
+            font-family:'Montserrat',sans-serif">${lv.id}</span>
         </div>
-        <div class="flex items-center space-x-2">
-            <span id="lives" class="text-red-500 font-bold text-xl">❤️ 5</span>
-        </div>
-    </nav>
+        <p style="font-size:.75rem;color:#888;font-weight:700">${lv.exercises.length} exercices · Traduction · Scramble · Audio</p>
+        ${progressHtml}${lockMsg}`;
 
-    <main id="app" class="max-w-2xl mx-auto px-6 py-8">
-        <div id="exercise-container" class="space-y-8">
-            </div>
-    </main>
+      if(unlocked) card.addEventListener('click',()=>Game.start(lv));
+      wrap.appendChild(card);
+    });
+  }
+};
 
-    <footer class="fixed bottom-0 left-0 right-0 border-t-2 border-gray-100 bg-white p-6">
-        <div class="max-w-2xl mx-auto flex justify-between items-center">
-            <div id="feedback-message" class="hidden font-bold text-lg"></div>
-            <button id="check-btn" onclick="handleAction()" class="w-full md:w-48 bg-green-500 hover:bg-green-400 text-white py-4 rounded-2xl font-black text-lg shadow-[0_4px_0_#46a302] active:shadow-none active:translate-y-1 transition-all uppercase tracking-widest">
-                Vérifier
-            </button>
-        </div>
-    </footer>
+/* ════════════════════════════════════════
+   GAME ENGINE
+════════════════════════════════════════ */
+const Game = (() => {
+  let S={};
 
-    <script>
-        // --- BASE DE DONNÉES DES EXERCICES (MODULABLE) ---
-        const lessonData = [
-            { type: 'translate', question: 'Le chat mange la pomme', answer: 'The cat eats the apple', hint: 'Think about third person singular!' },
-            { type: 'listening', audioText: 'I am a professional developer', answer: 'I am a professional developer' },
-            { type: 'build', question: 'Comment dit-on : "Où est mon téléphone ?"', chunks: ['Where', 'phone', 'is', 'my', 'the'], answer: 'Where is my phone' },
-            { type: 'translate', question: 'Le ciel est bleu', answer: 'The sky is blue', hint: 'Classic weather phrase.' }
-        ];
+  const shuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 
-        let currentStep = 0;
-        let lives = 5;
-        let selectedOption = null;
+  function start(lv){
+    S={lv,exercises:shuffle([...lv.exercises]),idx:0,lives:3,streak:0,maxStreak:0,correct:0,fbShown:false};
+    Screens.show('game');
+    render();
+  }
 
-        const container = document.getElementById('exercise-container');
-        const progressBar = document.getElementById('progress-bar');
-        const checkBtn = document.getElementById('check-btn');
-        const feedbackMsg = document.getElementById('feedback-message');
+  function restart(){ start(S.lv); }
 
-        function initLesson() {
-            if (currentStep >= lessonData.length) {
-                renderEndScreen();
-                return;
-            }
-            
-            const ex = lessonData[currentStep];
-            container.innerHTML = '';
-            
-            if (ex.type === 'translate') {
-                container.innerHTML = `
-                    <h2 class="text-3xl font-black text-gray-800">Traduisez cette phrase</h2>
-                    <div class="flex items-center space-x-4 mt-8">
-                        <div class="bg-white border-2 border-gray-200 p-6 rounded-2xl relative shadow-sm">
-                            <p class="text-xl">${ex.question}</p>
-                        </div>
-                    </div>
-                    <textarea id="user-input" class="w-full mt-8 p-4 border-2 border-gray-200 rounded-2xl text-xl focus:outline-none focus:border-sky-400" placeholder="Tapez en anglais..."></textarea>
-                `;
-            } else if (ex.type === 'listening') {
-                container.innerHTML = `
-                    <h2 class="text-3xl font-black text-gray-800">Écoutez et tapez</h2>
-                    <div class="flex flex-col items-center py-10">
-                        <button onclick="playAudio('${ex.audioText}')" class="bg-sky-400 p-8 rounded-full text-white shadow-lg hover:bg-sky-300 transition-all">
-                            <i class="fas fa-volume-up fa-3x"></i>
-                        </button>
-                    </div>
-                    <input type="text" id="user-input" class="w-full p-4 border-2 border-gray-200 rounded-2xl text-xl text-center">
-                `;
-                playAudio(ex.audioText);
-            } else if (ex.type === 'build') {
-                container.innerHTML = `
-                    <h2 class="text-3xl font-black text-gray-800">${ex.question}</h2>
-                    <div id="build-area" class="min-h-[60px] border-b-2 border-gray-200 my-8 flex flex-wrap gap-2"></div>
-                    <div class="flex flex-wrap gap-2 mt-4">
-                        ${ex.chunks.map(word => `<button onclick="addToBuild(this)" class="btn-option p-3 bg-white rounded-xl font-bold text-gray-700">${word}</button>`).join('')}
-                    </div>
-                `;
-            }
-        }
+  // HUD
+  function hud(){
+    // lives
+    const ld=document.getElementById('lives-display'); ld.innerHTML='';
+    for(let i=0;i<3;i++){const h=document.createElement('span');h.className='heart'+(i>=S.lives?' lose':'');h.textContent='❤️';ld.appendChild(h);}
+    // progress
+    document.getElementById('progress-fill').style.width=(S.idx/S.exercises.length*100)+'%';
+    // streak
+    const sb=document.getElementById('streak-badge');
+    if(S.streak>=2){sb.style.display='';sb.classList.toggle('hot',S.streak>=4);document.getElementById('streak-count').textContent=S.streak;}
+    else sb.style.display='none';
+    // counter
+    document.getElementById('ex-counter').textContent=`${S.idx+1} / ${S.exercises.length}`;
+  }
 
-        function handleAction() {
-            if (checkBtn.innerText === 'CONTINUER') {
-                nextStep();
-                return;
-            }
+  function render(){
+    if(S.idx>=S.exercises.length){victory();return;}
+    hideFb(); hud();
+    const ex=S.exercises[S.idx];
+    const tb=document.getElementById('type-badge');
+    tb.textContent=ex.typeLabel;
+    tb.style.cssText=`background:${ex.typeColor}22;border-color:${ex.typeColor};color:${ex.typeColor==='#c4a000'?'#7a5c00':ex.typeColor}`;
+    const c=document.getElementById('exercise-content'); c.innerHTML='';
+    const p=document.createElement('p');
+    p.style.cssText='font-size:.72rem;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px';
+    p.textContent=ex.instruction; c.appendChild(p);
+    if(ex.type==='translation') renderT(ex,c);
+    else if(ex.type==='scramble') renderS(ex,c);
+    else renderA(ex,c);
+  }
 
-            const ex = lessonData[currentStep];
-            let isCorrect = false;
-            let userAns = "";
+  function renderT(ex,c){
+    const box=document.createElement('div');
+    box.className='card-b rounded-xl p-5 mb-5 text-center';
+    box.innerHTML=`<span style="font-size:1.8rem;display:block;margin-bottom:6px">🇫🇷</span><p style="font-weight:900;font-size:1.1rem">${ex.fr}</p>`;
+    c.appendChild(box);
+    const inp=mkInp('t-inp','Type your answer in English…');
+    c.appendChild(inp); setTimeout(()=>inp.focus(),80);
+  }
 
-            if (ex.type === 'build') {
-                userAns = Array.from(document.getElementById('build-area').children).map(b => b.innerText).join(' ');
-            } else {
-                userAns = document.getElementById('user-input').value.trim();
-            }
+  function renderS(ex,c){
+    S.sel=[]; S.words=shuffle(ex.words);
+    const zone=document.createElement('div');
+    zone.id='az'; zone.className='answer-zone mb-4';
+    const ph=document.createElement('span'); ph.id='az-ph';
+    ph.style.cssText='color:#bbb;font-size:.85rem;font-weight:700';
+    ph.textContent='Cliquez les mots dans l\'ordre…';
+    zone.appendChild(ph); c.appendChild(zone);
+    const pool=document.createElement('div');
+    pool.style.cssText='display:flex;flex-wrap:wrap;gap:8px;justify-content:center'; pool.id='wp';
+    S.words.forEach((w,i)=>{
+      const b=document.createElement('button'); b.className='word-block'; b.textContent=w; b.dataset.i=i;
+      b.onclick=()=>pick(b,w,i); pool.appendChild(b);
+    });
+    c.appendChild(pool);
+  }
 
-            isCorrect = userAns.toLowerCase().replace(/[.?]/g, "") === ex.answer.toLowerCase().replace(/[.?]/g, "");
+  function pick(btn,word,idx){
+    if(btn.classList.contains('used')) return;
+    btn.classList.add('used'); S.sel.push({word,idx});
+    const zone=document.getElementById('az');
+    const ph=document.getElementById('az-ph'); if(ph) ph.remove();
+    zone.classList.add('has-words');
+    const blk=document.createElement('span'); blk.className='word-block selected'; blk.textContent=word; blk.dataset.i=idx;
+    blk.onclick=()=>{
+      S.sel=S.sel.filter(s=>s.idx!==idx); blk.remove();
+      document.querySelector(`#wp [data-i="${idx}"]`).classList.remove('used');
+      if(!zone.querySelector('.word-block')){
+        zone.classList.remove('has-words');
+        const p2=document.createElement('span'); p2.id='az-ph';
+        p2.style.cssText='color:#bbb;font-size:.85rem;font-weight:700';
+        p2.textContent='Cliquez les mots dans l\'ordre…'; zone.appendChild(p2);
+      }
+    };
+    zone.appendChild(blk);
+  }
 
-            if (isCorrect) {
-                showFeedback(true, "Excellent travail !");
-                playTone(true);
-            } else {
-                showFeedback(false, `Solution : ${ex.answer}`);
-                lives--;
-                document.getElementById('lives').innerText = `❤️ ${lives}`;
-                document.getElementById('app').classList.add('shake');
-                setTimeout(() => document.getElementById('app').classList.remove('shake'), 500);
-                playTone(false);
-                if (lives <= 0) alert("Plus de vies ! Recommençons.");
-            }
+  function renderA(ex,c){
+    const wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:20px';
+    const btn=document.createElement('button'); btn.className='audio-btn'; btn.id='abtn'; btn.innerHTML='🔊';
+    btn.onclick=()=>speak(ex.sentence,btn); wrap.appendChild(btn);
+    const hint=document.createElement('p');
+    hint.style.cssText='font-size:.75rem;font-weight:700;color:#aaa;text-align:center';
+    hint.textContent='Appuyer pour réécouter · taper ce que vous entendez';
+    wrap.appendChild(hint); c.appendChild(wrap);
+    const inp=mkInp('a-inp','What did you hear?');
+    c.appendChild(inp); setTimeout(()=>speak(ex.sentence,btn),500);
+  }
 
-            checkBtn.innerText = 'CONTINUER';
-        }
+  function mkInp(id,ph){
+    const i=document.createElement('input'); i.id=id; i.type='text'; i.className='input-b';
+    i.placeholder=ph; i.autocomplete='off'; i.spellcheck=false;
+    i.addEventListener('keydown',e=>{if(e.key==='Enter')Game.validate();}); return i;
+  }
 
-        function showFeedback(correct, msg) {
-            feedbackMsg.innerText = msg;
-            feedbackMsg.classList.remove('hidden', 'text-green-600', 'text-red-600');
-            feedbackMsg.classList.add(correct ? 'text-green-600' : 'text-red-600');
-            checkBtn.classList.remove('bg-green-500');
-            checkBtn.classList.add(correct ? 'bg-green-600' : 'bg-red-500');
-        }
+  function speak(text,btn){
+    window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text); u.lang='en-GB'; u.rate=0.84; u.pitch=1.05;
+    btn.classList.add('playing'); u.onend=u.onerror=()=>btn.classList.remove('playing');
+    window.speechSynthesis.speak(u);
+  }
 
-        function nextStep() {
-            currentStep++;
-            progressBar.style.width = `${(currentStep / lessonData.length) * 100}%`;
-            checkBtn.innerText = 'VÉRIFIER';
-            checkBtn.className = "w-full md:w-48 bg-green-500 text-white py-4 rounded-2xl font-black text-lg shadow-[0_4px_0_#46a302] uppercase tracking-widest";
-            feedbackMsg.classList.add('hidden');
-            initLesson();
-        }
+  const norm=s=>s.toLowerCase().replace(/[?.!,;:'"()\-]/g,'').replace(/\s+/g,' ').trim();
 
-        function addToBuild(btn) {
-            const area = document.getElementById('build-area');
-            if (btn.parentElement.id === 'build-area') {
-                document.querySelector('.flex.flex-wrap.gap-2.mt-4').appendChild(btn);
-            } else {
-                area.appendChild(btn);
-            }
-        }
+  function validate(){
+    if(S.fbShown){next();return;}
+    const ex=S.exercises[S.idx]; let ans='';
+    if(ex.type==='translation') ans=(document.getElementById('t-inp')?.value||'').trim();
+    else if(ex.type==='scramble') ans=S.sel.map(s=>s.word).join(' ');
+    else ans=(document.getElementById('a-inp')?.value||'').trim();
+    if(!ans){shake();return;}
+    const ok=norm(ans)===norm(ex.answer);
+    if(ok){ S.correct++; S.streak++; S.maxStreak=Math.max(S.maxStreak,S.streak); SFX.success(); }
+    else{
+      S.lives--; S.streak=0; SFX.error(); hud();
+      if(S.lives<=0){ showFb(false,ex.answer); setTimeout(()=>{hideFb();Screens.show('gameover');},2000); return; }
+    }
+    showFb(ok,ex.answer); hud(); S.fbShown=true;
+  }
 
-        function playAudio(text) {
-            const speech = new SpeechSynthesisUtterance(text);
-            speech.lang = 'en-US';
-            window.speechSynthesis.speak(speech);
-        }
+  function showFb(ok,correct){
+    const bar=document.getElementById('feedback-bar');
+    bar.className='feedback-bar show '+(ok?'correct':'incorrect');
+    document.getElementById('fb-title').textContent=ok?'✅ Parfait !':'❌ Pas tout à fait…';
+    document.getElementById('fb-detail').textContent=ok
+      ?['Excellent !','Super boulot !','Impeccable !','Bravo !'][Math.floor(Math.random()*4)]
+      :`Réponse : "${correct}"`;
+  }
 
-        function playTone(success) {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(success ? 880 : 220, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.2);
-        }
+  function hideFb(){ document.getElementById('feedback-bar').classList.remove('show'); S.fbShown=false; }
 
-        function renderEndScreen() {
-            container.innerHTML = `
-                <div class="text-center space-y-6">
-                    <h2 class="text-5xl font-black text-yellow-500">LEÇON TERMINÉE !</h2>
-                    <i class="fas fa-trophy fa-5x text-yellow-400"></i>
-                    <p class="text-2xl text-gray-600 font-bold">Tu as gagné 15 XP et conservé ton streak.</p>
-                </div>
-            `;
-            checkBtn.innerText = "FINIR";
-            checkBtn.onclick = () => location.reload();
-        }
+  function next(){ hideFb(); S.idx++; render(); }
 
-        initLesson();
-    </script>
+  function shake(){
+    const c=document.getElementById('exercise-card');
+    ['-8px','8px','-5px','2px','0'].forEach((p,i)=>setTimeout(()=>c.style.transform=`translateX(${p})`,i*70));
+  }
+
+  function victory(){
+    const pct=Math.round(S.correct/S.exercises.length*100);
+    const stars=pct>=90?3:pct>=70?2:pct>=40?1:0;
+    Store.setBest(S.lv.id,pct);
+
+    document.getElementById('v-level').textContent=S.lv.label.toUpperCase();
+
+    const vs=document.getElementById('v-stars'); vs.innerHTML='';
+    [1,2,3].forEach((n,i)=>{
+      const sp=document.createElement('span'); sp.className='star';
+      sp.textContent=n<=stars?'⭐':'☆';
+      if(n<=stars){sp.style.animationDelay=(i*.15)+'s';sp.classList.add('earned');}
+      vs.appendChild(sp);
+    });
+
+    document.getElementById('v-stats').innerHTML=`
+      <div class="card-b rounded-xl p-3 text-center">
+        <div style="font-size:1.4rem;font-weight:900;color:var(--c-success)">${S.correct}/${S.exercises.length}</div>
+        <div style="font-size:.7rem;font-weight:700;color:#aaa;margin-top:2px">Corrects</div></div>
+      <div class="card-b rounded-xl p-3 text-center">
+        <div style="font-size:1.4rem;font-weight:900;color:${S.lv.color}">${pct}%</div>
+        <div style="font-size:.7rem;font-weight:700;color:#aaa;margin-top:2px">Score</div></div>
+      <div class="card-b rounded-xl p-3 text-center">
+        <div style="font-size:1.4rem;font-weight:900;color:var(--c-accent-dark)">🔥${S.maxStreak}</div>
+        <div style="font-size:.7rem;font-weight:700;color:#aaa;margin-top:2px">Série max</div></div>`;
+
+    const vu=document.getElementById('v-unlock'); vu.innerHTML='';
+    const lvIdx=LEVELS.indexOf(S.lv), nextLv=LEVELS[lvIdx+1];
+    if(nextLv && pct>=nextLv.requiredScore){
+      vu.innerHTML=`<div class="card-b rounded-xl p-3 text-center" style="background:${nextLv.color}18;border-color:${nextLv.color}">
+        <p style="font-weight:900;font-size:.9rem;color:${nextLv.color}">🔓 ${nextLv.id} débloqué !</p>
+        <p style="font-size:.7rem;color:#aaa;margin-top:2px">${nextLv.label}</p></div>`;
+      SFX.unlock();
+    }
+
+    if(stars>0) confetti();
+    Screens.show('victory');
+  }
+
+  function confetti(){
+    const cols=['#FF6B35','#4ECDC4','#FFE66D','#06D6A0','#A855F7','#EF233C'];
+    for(let i=0;i<75;i++){
+      const el=document.createElement('div'); el.className='confetti-piece';
+      el.style.left=Math.random()*100+'vw';
+      el.style.background=cols[Math.floor(Math.random()*cols.length)];
+      el.style.borderRadius=Math.random()>.5?'50%':'3px';
+      const sz=7+Math.random()*9; el.style.width=sz+'px'; el.style.height=sz+'px';
+      el.style.animationDuration=(1.5+Math.random()*2.5)+'s';
+      el.style.animationDelay=Math.random()+'s';
+      document.body.appendChild(el); el.addEventListener('animationend',()=>el.remove());
+    }
+  }
+
+  function confirmQuit(){ if(confirm('Quitter ? Ta progression sera perdue.')) Screens.show('levels'); }
+
+  return {start,restart,validate,next,confirmQuit};
+})();
+</script>
 </body>
 </html>
