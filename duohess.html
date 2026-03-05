@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastery English - The Duo Killer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+        body { font-family: 'Nunito', sans-serif; background-color: #ffffff; }
+        .btn-option { transition: all 0.2s; border: 2px solid #e5e5e5; border-bottom: 4px solid #e5e5e5; }
+        .btn-option:active { border-bottom-width: 2px; transform: translateY(2px); }
+        .btn-option.selected { background-color: #ddf4ff; border-color: #84d8ff; color: #1899d6; }
+        .shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <nav class="max-w-4xl mx-auto p-6 flex items-center justify-between">
+        <button onclick="exitLesson()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times fa-lg"></i></button>
+        <div class="flex-grow mx-6 bg-gray-200 h-4 rounded-full overflow-hidden">
+            <div id="progress-bar" class="bg-green-500 h-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span id="lives" class="text-red-500 font-bold text-xl">❤️ 5</span>
+        </div>
+    </nav>
+
+    <main id="app" class="max-w-2xl mx-auto px-6 py-8">
+        <div id="exercise-container" class="space-y-8">
+            </div>
+    </main>
+
+    <footer class="fixed bottom-0 left-0 right-0 border-t-2 border-gray-100 bg-white p-6">
+        <div class="max-w-2xl mx-auto flex justify-between items-center">
+            <div id="feedback-message" class="hidden font-bold text-lg"></div>
+            <button id="check-btn" onclick="handleAction()" class="w-full md:w-48 bg-green-500 hover:bg-green-400 text-white py-4 rounded-2xl font-black text-lg shadow-[0_4px_0_#46a302] active:shadow-none active:translate-y-1 transition-all uppercase tracking-widest">
+                Vérifier
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        // --- BASE DE DONNÉES DES EXERCICES (MODULABLE) ---
+        const lessonData = [
+            { type: 'translate', question: 'Le chat mange la pomme', answer: 'The cat eats the apple', hint: 'Think about third person singular!' },
+            { type: 'listening', audioText: 'I am a professional developer', answer: 'I am a professional developer' },
+            { type: 'build', question: 'Comment dit-on : "Où est mon téléphone ?"', chunks: ['Where', 'phone', 'is', 'my', 'the'], answer: 'Where is my phone' },
+            { type: 'translate', question: 'Le ciel est bleu', answer: 'The sky is blue', hint: 'Classic weather phrase.' }
+        ];
+
+        let currentStep = 0;
+        let lives = 5;
+        let selectedOption = null;
+
+        const container = document.getElementById('exercise-container');
+        const progressBar = document.getElementById('progress-bar');
+        const checkBtn = document.getElementById('check-btn');
+        const feedbackMsg = document.getElementById('feedback-message');
+
+        function initLesson() {
+            if (currentStep >= lessonData.length) {
+                renderEndScreen();
+                return;
+            }
+            
+            const ex = lessonData[currentStep];
+            container.innerHTML = '';
+            
+            if (ex.type === 'translate') {
+                container.innerHTML = `
+                    <h2 class="text-3xl font-black text-gray-800">Traduisez cette phrase</h2>
+                    <div class="flex items-center space-x-4 mt-8">
+                        <div class="bg-white border-2 border-gray-200 p-6 rounded-2xl relative shadow-sm">
+                            <p class="text-xl">${ex.question}</p>
+                        </div>
+                    </div>
+                    <textarea id="user-input" class="w-full mt-8 p-4 border-2 border-gray-200 rounded-2xl text-xl focus:outline-none focus:border-sky-400" placeholder="Tapez en anglais..."></textarea>
+                `;
+            } else if (ex.type === 'listening') {
+                container.innerHTML = `
+                    <h2 class="text-3xl font-black text-gray-800">Écoutez et tapez</h2>
+                    <div class="flex flex-col items-center py-10">
+                        <button onclick="playAudio('${ex.audioText}')" class="bg-sky-400 p-8 rounded-full text-white shadow-lg hover:bg-sky-300 transition-all">
+                            <i class="fas fa-volume-up fa-3x"></i>
+                        </button>
+                    </div>
+                    <input type="text" id="user-input" class="w-full p-4 border-2 border-gray-200 rounded-2xl text-xl text-center">
+                `;
+                playAudio(ex.audioText);
+            } else if (ex.type === 'build') {
+                container.innerHTML = `
+                    <h2 class="text-3xl font-black text-gray-800">${ex.question}</h2>
+                    <div id="build-area" class="min-h-[60px] border-b-2 border-gray-200 my-8 flex flex-wrap gap-2"></div>
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        ${ex.chunks.map(word => `<button onclick="addToBuild(this)" class="btn-option p-3 bg-white rounded-xl font-bold text-gray-700">${word}</button>`).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        function handleAction() {
+            if (checkBtn.innerText === 'CONTINUER') {
+                nextStep();
+                return;
+            }
+
+            const ex = lessonData[currentStep];
+            let isCorrect = false;
+            let userAns = "";
+
+            if (ex.type === 'build') {
+                userAns = Array.from(document.getElementById('build-area').children).map(b => b.innerText).join(' ');
+            } else {
+                userAns = document.getElementById('user-input').value.trim();
+            }
+
+            isCorrect = userAns.toLowerCase().replace(/[.?]/g, "") === ex.answer.toLowerCase().replace(/[.?]/g, "");
+
+            if (isCorrect) {
+                showFeedback(true, "Excellent travail !");
+                playTone(true);
+            } else {
+                showFeedback(false, `Solution : ${ex.answer}`);
+                lives--;
+                document.getElementById('lives').innerText = `❤️ ${lives}`;
+                document.getElementById('app').classList.add('shake');
+                setTimeout(() => document.getElementById('app').classList.remove('shake'), 500);
+                playTone(false);
+                if (lives <= 0) alert("Plus de vies ! Recommençons.");
+            }
+
+            checkBtn.innerText = 'CONTINUER';
+        }
+
+        function showFeedback(correct, msg) {
+            feedbackMsg.innerText = msg;
+            feedbackMsg.classList.remove('hidden', 'text-green-600', 'text-red-600');
+            feedbackMsg.classList.add(correct ? 'text-green-600' : 'text-red-600');
+            checkBtn.classList.remove('bg-green-500');
+            checkBtn.classList.add(correct ? 'bg-green-600' : 'bg-red-500');
+        }
+
+        function nextStep() {
+            currentStep++;
+            progressBar.style.width = `${(currentStep / lessonData.length) * 100}%`;
+            checkBtn.innerText = 'VÉRIFIER';
+            checkBtn.className = "w-full md:w-48 bg-green-500 text-white py-4 rounded-2xl font-black text-lg shadow-[0_4px_0_#46a302] uppercase tracking-widest";
+            feedbackMsg.classList.add('hidden');
+            initLesson();
+        }
+
+        function addToBuild(btn) {
+            const area = document.getElementById('build-area');
+            if (btn.parentElement.id === 'build-area') {
+                document.querySelector('.flex.flex-wrap.gap-2.mt-4').appendChild(btn);
+            } else {
+                area.appendChild(btn);
+            }
+        }
+
+        function playAudio(text) {
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.lang = 'en-US';
+            window.speechSynthesis.speak(speech);
+        }
+
+        function playTone(success) {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(success ? 880 : 220, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        function renderEndScreen() {
+            container.innerHTML = `
+                <div class="text-center space-y-6">
+                    <h2 class="text-5xl font-black text-yellow-500">LEÇON TERMINÉE !</h2>
+                    <i class="fas fa-trophy fa-5x text-yellow-400"></i>
+                    <p class="text-2xl text-gray-600 font-bold">Tu as gagné 15 XP et conservé ton streak.</p>
+                </div>
+            `;
+            checkBtn.innerText = "FINIR";
+            checkBtn.onclick = () => location.reload();
+        }
+
+        initLesson();
+    </script>
+</body>
+</html>
